@@ -93,52 +93,47 @@ public class Battleship3D {
         // set center coordinate to 1
         board[centerX][centerY][centerZ] = String.valueOf(ship.charAt(0));
         updatedCoordinates.add(new int[]{centerX, centerY, centerZ});
-        
-//System.out.println("(" + (centerX+1) +","+ (centerY+1) +","+ (centerZ+i+1) +")"); // testing up
-                    //System.out.println(board[centerX][centerY][centerZ]);
         // complete the rest
         switch(direction.toLowerCase()) {
-            case "right":
-                for (int i = 1; i <= length-1; i++) {
-                    board[centerX][centerY][centerZ + i] = String.valueOf(ship.charAt(0));
-                    updatedCoordinates.add(new int[]{centerX, centerY, centerZ + i});
-                    //System.out.println("(" + (centerX+1) +","+ (centerY+1) +","+ (centerZ+i+1) +")"); // testing up
-                    //System.out.println(board[centerX][centerY][centerZ]);
-                }
-                break;
             case "left":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY][centerZ - i] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX, centerY, centerZ - i});
                 }
                 break;
+            case "right":
+                for (int i = 1; i <= length-1; i++) {
+                    board[centerX][centerY][centerZ + i] = String.valueOf(ship.charAt(0));
+                    updatedCoordinates.add(new int[]{centerX, centerY, centerZ + i});
+                }
+                break;
             case "front":
-                for (int i = 1; i <= length-1; i++) {
-                    board[centerX - i][centerY][centerZ] = String.valueOf(ship.charAt(0));
-                    updatedCoordinates.add(new int[]{centerX - i, centerY, centerZ});
-                }
-                break;
-            case "back":
-                for (int i = 1; i <= length-1; i++) {
-                    board[centerX + i][centerY][centerZ] = String.valueOf(ship.charAt(0));
-                    updatedCoordinates.add(new int[]{centerX + i, centerY, centerZ});
-                }
-                break;
-            case "up":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY + i][centerZ] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX, centerY + i, centerZ});
                 }
                 break;
-            case "down":
+            case "back":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY - i][centerZ] = String.valueOf(ship.charAt(0));
-                    updatedCoordinates.add(new int[]{centerX, centerY - i, centerZ}); 
+                    updatedCoordinates.add(new int[]{centerX, centerY - i, centerZ});
                 }
                 break;
-            }
+            case "up":
+                for (int i = 1; i <= length-1; i++) {
+                    board[centerX - i][centerY][centerZ] = String.valueOf(ship.charAt(0));
+                    updatedCoordinates.add(new int[]{centerX - i, centerY, centerZ});
+                }
+                break;
+            case "down":
+                for (int i = 1; i <= length-1; i++) {
+                    board[centerX + i][centerY][centerZ] = String.valueOf(ship.charAt(0));
+                    updatedCoordinates.add(new int[]{centerX + i, centerY, centerZ}); 
+                }
+                break;
+        }
         return updatedCoordinates;
-    }
+    }    
 
     public static HashMap<String, Boolean> evalPlacementPos(String[][][] board, int size, int centerX, int centerY, int centerZ, int radius) {
         // array for validating the unobstructed directions from fulcrum point
@@ -176,24 +171,24 @@ public class Battleship3D {
     }
 
     // return the directions
-    public static String getDirection(int centerX, int centerY, int centerZ, int x, int z, int y) {
+    public static String getDirection(int centerX, int centerY, int centerZ, int x, int y, int z) {
         if (centerX == x && centerY == y && centerZ == z) {
             return "Center";
         } else if (x > centerX) {
-            return "Back";
+            return "Right";
         } else if (x < centerX) {
-            return "Front";
+            return "Left";
         } else if (y > centerY) {
             return "Up";
         } else if (y < centerY) { 
-            return "Down"; //changed order for consistency with previous cases
+            return "Down";
         } else if (z > centerZ) {
-            return "Right";
+            return "Behind";
         } else if (z < centerZ) {
-            return "Left";
+            return "Front";
         }
         return null;
-    }
+    }    
 
     public static boolean existsInHashMap(HashMap<String, Boolean> validDirections, String direction) {
         for (String key : validDirections.keySet()) {
