@@ -98,7 +98,7 @@ public class Battleship3D {
                     //System.out.println(board[centerX][centerY][centerZ]);
         // complete the rest
         switch(direction.toLowerCase()) {
-            case "up":
+            case "right":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY][centerZ + i] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX, centerY, centerZ + i});
@@ -106,31 +106,31 @@ public class Battleship3D {
                     //System.out.println(board[centerX][centerY][centerZ]);
                 }
                 break;
-            case "down":
+            case "left":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY][centerZ - i] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX, centerY, centerZ - i});
                 }
                 break;
-            case "left":
+            case "front":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX - i][centerY][centerZ] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX - i, centerY, centerZ});
                 }
                 break;
-            case "right":
+            case "back":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX + i][centerY][centerZ] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX + i, centerY, centerZ});
                 }
                 break;
-            case "front":
+            case "up":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY + i][centerZ] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX, centerY + i, centerZ});
                 }
                 break;
-            case "back":
+            case "down":
                 for (int i = 1; i <= length-1; i++) {
                     board[centerX][centerY - i][centerZ] = String.valueOf(ship.charAt(0));
                     updatedCoordinates.add(new int[]{centerX, centerY - i, centerZ}); 
@@ -180,17 +180,17 @@ public class Battleship3D {
         if (centerX == x && centerY == y && centerZ == z) {
             return "Center";
         } else if (x > centerX) {
-            return "Right";
+            return "Back";
         } else if (x < centerX) {
-            return "Left";
-        } else if (y > centerY) {
             return "Front";
-        } else if (y < centerY) { 
-            return "Back"; //changed order for consistency with previous cases
-        } else if (z > centerZ) {
+        } else if (y > centerY) {
             return "Up";
+        } else if (y < centerY) { 
+            return "Down"; //changed order for consistency with previous cases
+        } else if (z > centerZ) {
+            return "Right";
         } else if (z < centerZ) {
-            return "Down";
+            return "Left";
         }
         return null;
     }
