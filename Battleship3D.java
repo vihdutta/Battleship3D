@@ -1,6 +1,7 @@
 import java.util.Scanner;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class Battleship3D {
     // main
@@ -30,20 +31,27 @@ public class Battleship3D {
 
         // set up ship placements
         for (Ship ship : ships) { // placing should occur in here...
-            System.out.println("Select a fulcrum point (<x><y><z>) to place your " + ship.getName() + " at.");
-            System.out.print("Choose the x value: ");
-            int x = s.nextInt() - 1;
-            System.out.print("Choose the y value: ");
-            int y = s.nextInt() - 1;
-            System.out.print("Choose the z value: ");
-            int z = s.nextInt() - 1;
+            boolean possibleToMove = false;
+            
+            int x = 0;
+            int y = 0;
+            int z = 0;
+            HashMap<String, Boolean> validDirections = new HashMap<String, Boolean>();
+            
+            while (!(possibleToMove)) {
+                System.out.println("Select a fulcrum point (<x><y><z>) to place your " + ship.getName() + " at.");
+                System.out.print("Choose the x value: ");
+                x = s.nextInt() - 1;
+                System.out.print("Choose the y value: ");
+                y = s.nextInt() - 1;
+                System.out.print("Choose the z value: ");
+                z = s.nextInt() - 1;
 
-            System.out.println();
-            System.out.println("Evaluating positions...");
-            HashMap<String, Boolean> validDirections = evalPlacementPos(board, size, x, y, z, ship.getLength());
-
-            while (!(checkHashMapValsTrue(validDirections))) {
-                continue;
+                System.out.println();
+                System.out.println("Evaluating positions...");
+                validDirections = evalPlacementPos(board, size, x, y, z, ship.getLength()-1);
+                System.out.println();
+                possibleToMove = checkHashMapValsTrue(validDirections);
             }
 
             System.out.println("Possible directions for " + "(" + (x+1) +","+ (y+1) +","+ (z+1) +")" + ": ");
@@ -83,11 +91,13 @@ public class Battleship3D {
            System.out.print("Choose the z value: ");
            int z = s.nextInt() - 1;
            
-           fire(board, x, y, z);
+           String hitOrMiss = fire(board, x, y, z);
            shots += 1;
            
+           System.out.println();
            System.out.println("Current board: ");
            printCube(board);
+           System.out.println(hitOrMiss);
         }
         System.out.println("Congrats! You sunk all the ships in " + shots + " shots!");
 
@@ -109,7 +119,7 @@ public class Battleship3D {
 
     // set ships to be placed
     public static void initShips(ArrayList<Ship> ships) {
-        ships.add(new Ship("Aircraft Carrier", 5));
+        ships.add(new Ship("Aircraft Carrier", 2));
         // ships.add(new Ship("Battleship", 4));
         // ships.add(new Ship("Destroyer", 3));
         // ships.add(new Ship("Submarine", 3));
@@ -165,72 +175,90 @@ public class Battleship3D {
         return updatedCoordinates;
     }    
 
-    public static HashMap<String, Boolean> evalPlacementPos(String[][][] board, int size, int centerX, int centerY, int centerZ, int radius) {
-        // array for validating the unobstructed directions from fulcrum point
-        HashMap<String, Boolean> validDirections = new HashMap<String, Boolean>();
-        validDirections.put("Up", true);
-        validDirections.put("Down", true);
-        validDirections.put("Left", true);
-        validDirections.put("Right", true);
-        validDirections.put("Front", true);
-        validDirections.put("Back", true);
+public static HashMap<String, Boolean> evalPlacementPos(String[][][] board, int size, int centerX, int centerY, int centerZ, int radius) {
+    // array for validating the unobstructed directions from fulcrum point
+    HashMap<String, Boolean> validDirections = new HashMap<String, Boolean>();
+    validDirections.put("Up", true);
+    validDirections.put("Down", true);
+    validDirections.put("Left", true);
+    validDirections.put("Right", true);
+    validDirections.put("Front", true);
+    validDirections.put("Back", true);
 
-        // iterate through each index around the point of interest
-        for (int x = centerX - radius; x <= centerX + radius; x++) {
-            for (int y = centerY - radius; y <= centerY + radius; y++) {
-                for (int z = centerZ - radius; z <= centerZ + radius; z++) {
-                    // check if the point is within the desired range and in one of the valid directions
-                    boolean directionInRange = (x == centerX && y == centerY) || (x == centerX && z == centerZ)
-                            || (y == centerY && z == centerZ);
-                    int distance = Math.abs(x - centerX) + Math.abs(y - centerY) + Math.abs(z - centerZ);
-                    if (directionInRange && distance >= 1 && distance <= radius * 2) { // only consider points within range
-                        // check if the current index is within bounds
-                        String direction = getDirection(centerX, centerY, centerZ, x,y,z);
+    try {
+        if (!board[centerX][centerY][centerZ].equals("~")) {
+            for (Map.Entry<String, Boolean> entry : validDirections.entrySet()) {
+                entry.setValue(false);
+            }
+            return validDirections;
+        }
+    } catch(Exception e) {
+        System.out.println("Not a valid position! " + e);
+        for (Map.Entry<String, Boolean> entry : validDirections.entrySet()) {
+            entry.setValue(false);
+        }
+        return validDirections;
+    } 
 
-                        // if a direction has a point that is NOT valid, change the validDirections boolean array
-                        if (!(x >= 0 && x < size && y >= 0 && y < size && z >= 0 && z < size)) {
-                            validDirections.put(direction, false);
-                        }
-                        System.out.println("(" + (x+1)+","+(y+1)+","+(z+1)+")-"+direction+")");
-                        //System.out.println("(" + (x+1)+","+(y+1)+","+(z+1)+")-"+direction+"-"+(isValid?"valid":"invalid"));
+
+    // iterate through each index around the point of interest
+    for (int z = centerZ - radius; z <= centerZ + radius; z++) {
+        for (int y = centerY - radius; y <= centerY + radius; y++) {
+            for (int x = centerX - radius; x <= centerX + radius; x++) {
+                // check if the point is within the desired range and in one of the valid directions
+                boolean directionInRange = (x == centerX && y == centerY) || (x == centerX && z == centerZ)
+                        || (y == centerY && z == centerZ);
+                int distance = Math.abs(x - centerX) + Math.abs(y - centerY) + Math.abs(z - centerZ);
+                if (directionInRange && distance >= 1 && distance <= radius * 2) { // only consider points within range
+                    // check if the current index is within bounds
+                    //String direction = getDirection(centerX, centerY, centerZ, x,y,z);
+                    String direction = getDirection(centerZ, centerY, centerX, x,y,z);
+
+                    // if a direction has a point that is NOT valid, change the validDirections boolean array
+                    if (!(x >= 0 && x < size && y >= 0 && y < size && z >= 0 && z < size)) {
+                        validDirections.put(direction, false);
                     }
+                    System.out.println("(" + (x+1)+","+(y+1)+","+(z+1)+")-"+direction+"");
+                    //System.out.println("(" + (x+1)+","+(y+1)+","+(z+1)+")-"+direction+"-"+(isValid?"valid":"invalid"));
                 }
             }
         }
-        return validDirections;
     }
+    return validDirections;
+}
     
-    public static void fire(String[][][] board, int centerX, int centerY, int centerZ) {
+    public static String fire(String[][][] board, int centerX, int centerY, int centerZ) {
       String target = board[centerX][centerY][centerZ];
-      System.out.println(target);
-      if (!target.equals("~") && !target.equals("*")) {
+      if (!target.equals("~") && !target.equals("*") && !target.equals("X")) {
          board[centerX][centerY][centerZ] = "X"; // hit
-         System.out.println("Hit!");
-         return;
+         return "Hit!";
       }
       board[centerX][centerY][centerZ] = "*";
-      System.out.println("Miss!");
+      return "Miss!";
     }
 
     // return the directions
-    public static String getDirection(int centerX, int centerY, int centerZ, int x, int y, int z) {
-        if (centerX == x && centerY == y && centerZ == z) {
+    public static String getDirection(int centerZ, int centerY, int centerX, int z, int y, int x) {
+        if (centerZ == z && centerY == y && centerX == x) {
             return "Center";
         } else if (x > centerX) {
             return "Right";
         } else if (x < centerX) {
             return "Left";
         } else if (y > centerY) {
-            return "Up";
-        } else if (y < centerY) { 
-            return "Down";
-        } else if (z > centerZ) {
-            return "Behind";
-        } else if (z < centerZ) {
             return "Front";
+        } else if (y < centerY) {
+            return "Back";
+        } else if (z > centerZ) {
+            return "Down";
+        } else if (z < centerZ) {
+            return "Up";
+        } else {
+            return "Unknown";
         }
-        return null;
-    }    
+    }
+
+
 
     public static boolean existsInHashMap(HashMap<String, Boolean> validDirections, String direction) {
         for (String key : validDirections.keySet()) {
@@ -270,7 +298,6 @@ public class Battleship3D {
                 int y = coordinate[1];
                 int z = coordinate[2];
                 if (!board[x][y][z].equals("X")) {
-                    System.out.println("Coordinate alive: " + x + " " + y + " " + z + "Character: " + board[x][y][z]);
                     isSunk = false; // if any coordinate is not "X", the ship is not sunk
                     break;
                 }
@@ -282,10 +309,7 @@ public class Battleship3D {
     public static boolean gameAlive(String[][][] board, ArrayList<Ship> ships) {
         setShipsSunkValues(board, ships);
         for (Ship ship : ships) {
-            System.out.println("Ship sunk status: ");
-            System.out.println(ship.getName() + " " + ship.isSunk());
             if (ship.isSunk() == false) {
-                System.out.println("Game alive is true because " + ship.getName() + " is still alive");
                 return true;
             }
         }
