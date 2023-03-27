@@ -119,12 +119,12 @@ public class Battleship3D {
 
     // set ships to be placed
     public static void initShips(ArrayList<Ship> ships) {
-        ships.add(new Ship("Aircraft Carrier", 2));
-        // ships.add(new Ship("Battleship", 4));
-        // ships.add(new Ship("Destroyer", 3));
-        // ships.add(new Ship("Submarine", 3));
-        // ships.add(new Ship("Patrol Boat", 2));
-        // ships.add(new Ship("John", 1));
+         ships.add(new Ship("Aircraft Carrier", 5));
+         ships.add(new Ship("Battleship", 4));
+         ships.add(new Ship("Destroyer", 3));
+         ships.add(new Ship("Submarine", 3));
+         ships.add(new Ship("Patrol Boat", 2));
+         ships.add(new Ship("John", 1));
     }
 
     // place the ships on the 3d board
@@ -180,8 +180,8 @@ public static HashMap<String, Boolean> evalPlacementPos(String[][][] board, int 
     HashMap<String, Boolean> validDirections = new HashMap<String, Boolean>();
     validDirections.put("Up", true);
     validDirections.put("Down", true);
-    validDirections.put("Left", true);
     validDirections.put("Right", true);
+    validDirections.put("Left", true);
     validDirections.put("Front", true);
     validDirections.put("Back", true);
 
@@ -216,6 +216,13 @@ public static HashMap<String, Boolean> evalPlacementPos(String[][][] board, int 
 
                     // if a direction has a point that is NOT valid, change the validDirections boolean array
                     if (!(x >= 0 && x < size && y >= 0 && y < size && z >= 0 && z < size)) {
+                        validDirections.put(direction, false);
+                    }
+                    try {
+                        if (!board[x][y][z].equals("~")) {
+                            validDirections.put(direction, false);
+                        }   
+                    } catch(Exception e) {
                         validDirections.put(direction, false);
                     }
                     System.out.println("(" + (x+1)+","+(y+1)+","+(z+1)+")-"+direction+"");
