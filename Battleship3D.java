@@ -7,7 +7,8 @@ public class Battleship3D {
     public static void main(String[] args) {
         // general variables
         String[][][] board;
-        HashMap<String, Integer> ships = new HashMap<String, Integer>();
+        ArrayList<Ship> ships = new ArrayList<Ship>();
+        //HashMap<String, Integer> ships = new HashMap<String, Integer>();
         Scanner s = new Scanner(System.in);
 
         // welcome
@@ -25,11 +26,11 @@ public class Battleship3D {
 
         // set up ship data
         System.out.println("Initializing ships...");
-        initShipHashMap(ships);
+        initShips(ships);
 
         // set up ship placements
-        for (String ship : ships.keySet()) { // placing should occur in here...
-            System.out.println("Select a fulcrum point (<x><y><z>) to place your " + ship + " at.");
+        for (Ship ship : ships) { // placing should occur in here...
+            System.out.println("Select a fulcrum point (<x><y><z>) to place your " + ship.getName() + " at.");
             System.out.print("Choose the x value: ");
             int x = s.nextInt() - 1;
             System.out.print("Choose the y value: ");
@@ -39,7 +40,7 @@ public class Battleship3D {
 
             System.out.println();
             System.out.println("Evaluating positions...");
-            HashMap<String, Boolean> validDirections = evalPlacementPos(board, size, x, y, z, ships.get(ship));
+            HashMap<String, Boolean> validDirections = evalPlacementPos(board, size, x, y, z, ship.getLength());
 
             while (!(checkHashMapValsTrue(validDirections))) {
                 continue;
@@ -59,7 +60,8 @@ public class Battleship3D {
                 validDirectionInput = existsInHashMap(validDirections, direction);
             }
 
-            ArrayList<int[]> updatedPositions = placeShip(board, ship, x, y, z, ships.get(ship), direction);
+            ArrayList<int[]> updatedPositions = placeShip(board, ship, x, y, z, ship.getLength(), direction);
+            ship.setCoordinates(updatedPositions);
             for (int[] coordinate : updatedPositions) {
                 System.out.println("Ship placed at coordinates: (" + (coordinate[0] + 1) + ", " + (coordinate[1] + 1) 
                                    + ", " +(coordinate[2] + 1) + ")");
@@ -68,66 +70,94 @@ public class Battleship3D {
 
             printCube(board);
         }
+        
+        // while all the ships do not have an attribute of destroyed... WIP
+        System.out.println("Is game alive?: " + gameAlive(board, ships));
+        int shots = 0;
+        while (gameAlive(board, ships)) {
+           System.out.println("Select a point (<x><y><z>) to fire at.");
+           System.out.print("Choose the x value: ");
+           int x = s.nextInt() - 1;
+           System.out.print("Choose the y value: ");
+           int y = s.nextInt() - 1;
+           System.out.print("Choose the z value: ");
+           int z = s.nextInt() - 1;
+           
+           fire(board, x, y, z);
+           shots += 1;
+           
+           System.out.println("Current board: ");
+           printCube(board);
+        }
+        System.out.println("Congrats! You sunk all the ships in " + shots + " shots!");
 
         s.close();
     }
 
     // set 3d board size
     public static String[][][] initGameArray(int size) {
-        return new String[size][size][size];
+        String[][][] board = new String[size][size][size];
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                for (int k = 0; k < board[i][j].length; k++) {
+                    board[i][j][k] = "~";
+                }
+            }
+        }
+        return board;
     }
 
     // set ships to be placed
-    public static void initShipHashMap(HashMap<String, Integer> ships) {
-        ships.put("Aircraft Carrier", 5);
-        ships.put("Battleship", 4);
-        ships.put("Destroyer", 3);
-        ships.put("Submarine", 3);
-        ships.put("Patrol Boat", 2);
-        ships.put("John", 1);
+    public static void initShips(ArrayList<Ship> ships) {
+        ships.add(new Ship("Aircraft Carrier", 5));
+        // ships.add(new Ship("Battleship", 4));
+        // ships.add(new Ship("Destroyer", 3));
+        // ships.add(new Ship("Submarine", 3));
+        // ships.add(new Ship("Patrol Boat", 2));
+        // ships.add(new Ship("John", 1));
     }
 
     // place the ships on the 3d board
-    public static ArrayList<int[]> placeShip(String[][][] board, String ship, int centerX, int centerY, int centerZ, int length, String direction) {
+    public static ArrayList<int[]> placeShip(String[][][] board, Ship ship, int centerX, int centerY, int centerZ, int length, String direction) {
         ArrayList<int[]> updatedCoordinates = new ArrayList<>();
         // set center coordinate to 1
-        board[centerX][centerY][centerZ] = String.valueOf(ship.charAt(0));
+        board[centerX][centerY][centerZ] = ship.getSymbol();
         updatedCoordinates.add(new int[]{centerX, centerY, centerZ});
         // complete the rest
         switch(direction.toLowerCase()) {
             case "left":
                 for (int i = 1; i <= length-1; i++) {
-                    board[centerX][centerY][centerZ - i] = String.valueOf(ship.charAt(0));
+                    board[centerX][centerY][centerZ - i] = ship.getSymbol();
                     updatedCoordinates.add(new int[]{centerX, centerY, centerZ - i});
                 }
                 break;
             case "right":
                 for (int i = 1; i <= length-1; i++) {
-                    board[centerX][centerY][centerZ + i] = String.valueOf(ship.charAt(0));
+                    board[centerX][centerY][centerZ + i] = ship.getSymbol();
                     updatedCoordinates.add(new int[]{centerX, centerY, centerZ + i});
                 }
                 break;
             case "front":
                 for (int i = 1; i <= length-1; i++) {
-                    board[centerX][centerY + i][centerZ] = String.valueOf(ship.charAt(0));
+                    board[centerX][centerY + i][centerZ] = ship.getSymbol();
                     updatedCoordinates.add(new int[]{centerX, centerY + i, centerZ});
                 }
                 break;
             case "back":
                 for (int i = 1; i <= length-1; i++) {
-                    board[centerX][centerY - i][centerZ] = String.valueOf(ship.charAt(0));
+                    board[centerX][centerY - i][centerZ] = ship.getSymbol();
                     updatedCoordinates.add(new int[]{centerX, centerY - i, centerZ});
                 }
                 break;
             case "up":
                 for (int i = 1; i <= length-1; i++) {
-                    board[centerX - i][centerY][centerZ] = String.valueOf(ship.charAt(0));
+                    board[centerX - i][centerY][centerZ] = ship.getSymbol();
                     updatedCoordinates.add(new int[]{centerX - i, centerY, centerZ});
                 }
                 break;
             case "down":
                 for (int i = 1; i <= length-1; i++) {
-                    board[centerX + i][centerY][centerZ] = String.valueOf(ship.charAt(0));
+                    board[centerX + i][centerY][centerZ] = ship.getSymbol();
                     updatedCoordinates.add(new int[]{centerX + i, centerY, centerZ}); 
                 }
                 break;
@@ -168,6 +198,18 @@ public class Battleship3D {
             }
         }
         return validDirections;
+    }
+    
+    public static void fire(String[][][] board, int centerX, int centerY, int centerZ) {
+      String target = board[centerX][centerY][centerZ];
+      System.out.println(target);
+      if (!target.equals("~") && !target.equals("*")) {
+         board[centerX][centerY][centerZ] = "X"; // hit
+         System.out.println("Hit!");
+         return;
+      }
+      board[centerX][centerY][centerZ] = "*";
+      System.out.println("Miss!");
     }
 
     // return the directions
@@ -214,6 +256,36 @@ public class Battleship3D {
     public static boolean checkHashMapValsTrue(HashMap<String, Boolean> validDirections) {
         for (boolean b: validDirections.values()) {
             if (b) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static void setShipsSunkValues(String[][][] board, ArrayList<Ship> ships) {
+        for (Ship ship : ships) {
+            boolean isSunk = true; // assume the ship is sunk
+            for (int[] coordinate : ship.getCoordinates()) {
+                int x = coordinate[0];
+                int y = coordinate[1];
+                int z = coordinate[2];
+                if (!board[x][y][z].equals("X")) {
+                    System.out.println("Coordinate alive: " + x + " " + y + " " + z + "Character: " + board[x][y][z]);
+                    isSunk = false; // if any coordinate is not "X", the ship is not sunk
+                    break;
+                }
+            }
+            ship.setSunk(isSunk);
+        }
+    }
+
+    public static boolean gameAlive(String[][][] board, ArrayList<Ship> ships) {
+        setShipsSunkValues(board, ships);
+        for (Ship ship : ships) {
+            System.out.println("Ship sunk status: ");
+            System.out.println(ship.getName() + " " + ship.isSunk());
+            if (ship.isSunk() == false) {
+                System.out.println("Game alive is true because " + ship.getName() + " is still alive");
                 return true;
             }
         }
