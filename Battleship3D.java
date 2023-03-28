@@ -6,24 +6,6 @@ import java.util.Map;
 public class Battleship3D {
     // main
     public static void main(String[] args) {
-        java.io.PrintStream out = System.out;
-
-		// Get an instance of the Runtime class
-		Runtime runtime = Runtime.getRuntime();
-
-		// To convert from Bytes to MegaBytes:
-		// 1 MB = 1024 KB and 1 KB = 1024 Bytes.
-		// Therefore, 1 MB = 1024 * 1024 Bytes.
-		long MegaBytes = 1024 * 1024;
-
-		// Memory which is currently available for use by heap
-		long totalMemory = runtime.totalMemory() / MegaBytes;
-		out.println("Heap size available for use -> " + totalMemory + " MB");
-
-		// Maximum memory which can be used if required.
-		// The heap cannot grow beyond this size
-		long maxMemory = runtime.maxMemory() / MegaBytes;
-		out.println("Maximum memory Heap can use -> " + maxMemory + " MB");
         // general variables
         String[][][] board;
         String[][][] playerBoard;
@@ -66,17 +48,28 @@ public class Battleship3D {
             }
         }
 
-        // print the board
+        // ask if they want to print
         System.out.println();
-        System.out.println("Print locations of the ships? y/n");
-        String revealLocationInput = s.nextLine();
-        boolean revealLocations = (revealLocationInput.toLowerCase().equals("y")) ? true : false;
+        System.out.println("Play blindly? No board/miss messages; recommended for large autoplay matches. y/n");
+        String hideBoardInput = s.nextLine();
+        boolean hideBoard = (hideBoardInput.toLowerCase().equals("y")) ? true : false;
 
-        if (revealLocations) {
-            printCube(board);
-        } else {
-            printCube(playerBoard);
+        // print the board
+        boolean revealLocations = false;
+        if (!hideBoard) {
+            System.out.println();
+            System.out.println("Show locations of the ships? y/n");
+            String revealLocationInput = s.nextLine();
+            revealLocations = (revealLocationInput.toLowerCase().equals("y")) ? true : false;
         }
+
+        if (!hideBoard) {
+            if (revealLocations) {
+                printCube(board);
+            } else {
+                printCube(playerBoard);
+            }
+        }   
 
         System.out.println();
         System.out.println("Autoplay? y/n");
@@ -89,24 +82,41 @@ public class Battleship3D {
         while (gameAlive(board, ships)) {
             String hitOrMiss = null;
             if (autoPlay) {
-                hitOrMiss = autoFire(board, size, playerBoard);
+                hitOrMiss = autoFire(board, playerBoard, size, ships);
             } else {
-                hitOrMiss = fire(board, playerBoard, s);
+                hitOrMiss = fire(board, playerBoard, ships, s);
             }
             shots += 1;
 
-            System.out.println();
-            System.out.println("Current board: ");
-            if (revealLocations) {
-            printCube(board);
-            } else {
-            printCube(playerBoard);
+            if (!hideBoard) {
+                System.out.println();
+                System.out.println("Current board: ");
             }
-            System.out.println(hitOrMiss);
+    
+            if (!hideBoard) {
+                if (revealLocations) {
+                    printCube(board);
+                } else {
+                    printCube(playerBoard);
+                }
+            }
+
+            if (hideBoard) {
+                if (!hitOrMiss.equals("Miss!")) {
+                    if (hitOrMiss.equals("Hit! ")) {
+                        System.out.print(hitOrMiss);
+                    } else {
+                        System.out.println(hitOrMiss);
+                    }
+                }
+            } else {
+                System.out.println(hitOrMiss);
+            }
+
         }
         long elapsed = System.currentTimeMillis() - start;
-        System.out
-                .println("Congrats! You sunk all\n the ships in \n" + shots + " shots and \n" + elapsed / 1000.0 + " seconds!");
+        System.out.println();
+        System.out.println("Congrats! You sunk all the ships in " + shots + " shots and " + elapsed / 1000.0 + " seconds!");
 
         s.close();
     }
@@ -128,8 +138,8 @@ public class Battleship3D {
     public static void initShips(ArrayList<Ship> ships) {
         ships.add(new Ship("Aircraft Carrier", 5));
         ships.add(new Ship("Battleship", 4));
-        ships.add(new Ship("Destroyer", 3));
-        ships.add(new Ship("Submarine", 3));
+        ships.add(new Ship("Destroyer", 3)); //3
+        ships.add(new Ship("Submarine", 3)); //3
         ships.add(new Ship("Patrol Boat", 2));
     }
 
@@ -248,7 +258,7 @@ public class Battleship3D {
         return validDirections;
     }
 
-    public static String autoFire(String[][][] board, int size, String[][][] playerBoard) {
+    public static String autoFire(String[][][] board, String[][][] playerBoard, int size, ArrayList<Ship> ships) {
         boolean notAlreadySelected = true;
         int x = 0;
         int y = 0;
@@ -269,33 +279,71 @@ public class Battleship3D {
         }
 
         if (!target.equals("~") && !target.equals("*") && !target.equals("X")) {
+            String symbol = board[x][y][z];
             board[x][y][z] = "X"; // hit
             playerBoard[x][y][z] = "X";
-            return "Hit!";
+            return "Hit! " + sunkOrNot(board, ships, symbol);
         }
         board[x][y][z] = "*";
         playerBoard[x][y][z] = "*";
         return "Miss!";
     }
 
-    public static String fire(String[][][] board, String[][][] playerBoard, Scanner s) {
-        System.out.println("Select a point (<x><y><z>) to fire at.");
-        System.out.print("Choose the x value: ");
-        int x = s.nextInt() - 1;
-        System.out.print("Choose the y value: ");
-        int y = s.nextInt() - 1;
-        System.out.print("Choose the z value: ");
-        int z = s.nextInt() - 1;
+    public static String fire(String[][][] board, String[][][] playerBoard, ArrayList<Ship> ships, Scanner s) {
+        int x = 0;
+        int y = 0;
+        int z = 0;
+
+        while (true) {
+            System.out.println("Select a point (<x><y><z>) to fire at.");
+            System.out.print("Choose the x value: ");
+            x = s.nextInt() - 1;
+            System.out.print("Choose the y value: ");
+            y = s.nextInt() - 1;
+            System.out.print("Choose the z value: ");
+            z = s.nextInt() - 1;
+            if (x < 0 || y < 0 || z < 0 || x >= board.length || y >= board[0].length || z >= board[0][0].length) {
+                System.out.println("Invalid input, please try again: ");
+            } else {
+                break;
+            }
+        }
 
         String target = board[x][y][z];
         if (!target.equals("~") && !target.equals("*") && !target.equals("X")) {
+            String symbol = board[x][y][z];
             board[x][y][z] = "X"; // hit
             playerBoard[x][y][z] = "X";
-            return "Hit!";
+            return "Hit! " + sunkOrNot(board, ships, symbol);
         }
         board[x][y][z] = "*";
         playerBoard[x][y][z] = "*";
         return "Miss!";
+    }
+
+    // check if there's any more of the specific ship left
+    public static String sunkOrNot(String[][][] board, ArrayList<Ship> ships, String symbol) {
+        // get the name of the ship
+        String shipName = "";
+        for (Ship ship : ships) {
+            if (ship.getSymbol().equals(symbol)) {
+                shipName = ship.getName();
+            }
+        }
+
+        // check if ship symbol still exists
+        for (int x = 0; x < board.length; x++) {
+            for (int y = 0; y < board[0].length; y++) {
+                for (int z = 0; z < board[0][0].length; z++) {
+                    if (board[x][y][z].equals(symbol)) {
+                        return ""; // no, ship still alive
+                    }
+                }
+            }
+        }
+
+        // if it gets past the loop, it means no more symbol exists of the ship and it has been sunk from the hit!
+        return "You sunk the " + shipName + "!";
     }
 
     // return the directions
@@ -328,11 +376,11 @@ public class Battleship3D {
         return false;
     }
 
-    public static void printCube(String[][][] arr3d) {
-        for (int i = 0; i < arr3d.length; i++) {
-            for (int j = 0; j < arr3d[i].length; j++) {
-                for (int k = 0; k < arr3d[i][j].length; k++) {
-                    System.out.print(arr3d[i][j][k] + " ");
+    public static void printCube(String[][][] board) {
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                for (int k = 0; k < board[i][j].length; k++) {
+                    System.out.print(board[i][j][k] + " ");
                 }
                 System.out.println();
             }
